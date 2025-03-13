@@ -660,11 +660,39 @@ class FiveDOFRobot:
             EE: EndEffector object containing desired position and orientation.
             soln: Optional parameter for multiple solutions (not implemented).
         """
-        ########################################
+        dhTable = [[self.theta[0], self.l1, 0, math.pi/2],
+                   [math.pi/2, 0, 0, 0],
+                   [self.theta[1], 0, self.l2, math.pi],
+                   [self.theta[2], 0, self.l3, math.pi], 
+                   [self.theta[3], 0, self.l4, 0],
+                   [-math.pi/2, 0, 0, -math.pi/2],
+                   [self.theta[4], self.l5, 0, 0]]
 
-        # insert your code here
+        #create our homogeneous tranformation matrix symbolically
+        arr = []
+        for i in range(len(dhTable)):
+            arr.append(ut.dh_to_matrix(dhTable[i]))
+        
+        H5 = arr[0] * arr[1] * arr[2] * arr[3] * arr[4] * arr[5]
+        R5 = H5[0:3][0:3]
+        z0 = np.array[[0],[0],[1]]
 
-        ########################################
+        PWrist = EE - (self.l4+self.l5)*np.matmul(R5,z0)
+
+        x_wrist = PWrist[0]
+        y_wrist = PWrist[1]
+        z_wrist = PWrist[2]
+
+        t_1 = atan2(y_wrist,x_wrist)
+
+        s = z_wrist - self.l1
+        r = sqrt(x_wrist**2 + y_wrist**2)
+
+        L = sqrt(s**2 + r**2)
+
+
+
+
 
 
     def calc_numerical_ik(self, EE: EndEffector, tol=0.01, ilimit=50):
