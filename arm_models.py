@@ -647,12 +647,12 @@ class FiveDOFRobot:
                 self.theta[i] = theta[i] * PI / 180
         else:
             self.theta = theta
-        
-        # Calculate robot points (positions of joints)
+
+        # Update the robot configuration (i.e., the positions of the joints and end effector)
         self.calc_robot_points()
 
 
-    def calc_inverse_kinematics(self, EE: EndEffector, soln=0):
+    def calc_inverse_kinematics(self, EE: EndEffector, soln=0,radians=False):
         """
         Calculate inverse kinematics to determine the joint angles based on end-effector position.
         
@@ -662,27 +662,52 @@ class FiveDOFRobot:
         """
         x, y, z = EE.x, EE.y, EE.z
 
-        dhTable = [[self.theta[0], self.l1, 0, math.pi/2],
-                   [math.pi/2, 0, 0, 0],
-                   [self.theta[1], 0, self.l2, math.pi],
-                   [self.theta[2], 0, self.l3, math.pi], 
-                   [self.theta[3], 0, self.l4, 0],
-                   [-math.pi/2, 0, 0, -math.pi/2],
-                   [self.theta[4], self.l5, 0, 0]]
+        # dhTable = [[self.theta[0], self.l1, 0, -math.pi/2],
+        #            [self.theta[1]-math.pi/2, 0, self.l2, math.pi],
+        #            [self.theta[2], 0, self.l3, math.pi], 
+        #            [self.theta[3] + math.pi/2, 0, 0, math.pi/2],
+        #            [self.theta[4], self.l4 + self.l5, 0, 0]]
 
-        arr = []
-        for i in range(len(dhTable)):
-            arr.append(ut.dh_to_matrix(dhTable[i]))
+        # arr = []
+        # for i in range(len(dhTable)):
+        #     arr.append(ut.dh_to_matrix(dhTable[i]))
+
+        # #self.calc_HTM()
         
-        H5 = arr[0] * arr[1] * arr[2] * arr[3] * arr[4] * arr[5]
+        # #H5 = self.T[0] * self.T[1] * self.T[2] * self.T[3] * self.T[4]
+        # H5 = arr[0] * arr[1] * arr[2] * arr[3] * arr[4]
+        # if not radians:
+        #     theta = [np.deg2rad(angle) for angle in theta]
+
+        self.H_01 = ut.dh_to_matrix([self.theta[0], self.l1, 0, -PI / 2])
+        self.H_12 = ut.dh_to_matrix([self.theta[1] - PI / 2, 0, self.l2, PI])
+        self.H_23 = ut.dh_to_matrix([self.theta[2], 0, self.l3, PI])
+        self.H_34 = ut.dh_to_matrix([self.theta[3] + PI / 2, 0, 0, PI / 2])
+        self.H_45 = ut.dh_to_matrix([self.theta[4], self.l4 + self.l5, 0, 0])
+        H5 = self.H_01 @ self.H_12 @ self.H_23 @ self.H_34
+        #self.T = [self.H_01, self.H_12, self.H_23, self.H_34, self.H_45]
+        print(H5)
+
         R5 = np.array(H5[0:3,0:3])
         z0 = np.transpose(np.array([[0,0,1]]))
+        print(R5)
+        #print(z0)
+    
+        print(np.linalg.det(R5))
 
-        d6 = (self.l4+self.l5)*np.matmul(R5,z0)
+        #d = np.matmul(R5,z0)
+        d = R5 * z0
+        print(d)
+        d6 = (self.l4+self.l5)*d
+        print(d6)
 
         x_wrist = x - d6[0]
         y_wrist = y - d6[1]
         z_wrist = z - d6[2]
+
+        print(x_wrist)
+        print(y_wrist)
+        print(z_wrist)
 
         t_1 = atan2(y_wrist,x_wrist)
 
@@ -692,6 +717,7 @@ class FiveDOFRobot:
         L = sqrt(s**2 + r**2)
         alpha = atan2(s,r)
         beta = acos((self.l2**2 + self.l3**2 - L**2)/(2*self.l2*self.l3))
+
 
         if soln == 0:
             t_1 = atan2(y_wrist,x_wrist)
@@ -788,7 +814,7 @@ class FiveDOFRobot:
 
     def calc_robot_points(self):
         """ Calculates the main arm points using the current joint angles """
-
+        self.calc_HTM()
         # Initialize points[0] to the base (origin)
         self.points[0] = np.array([0, 0, 0, 1])
 
