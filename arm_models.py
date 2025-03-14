@@ -660,6 +660,8 @@ class FiveDOFRobot:
             EE: EndEffector object containing desired position and orientation.
             soln: Optional parameter for multiple solutions (not implemented).
         """
+        x, y, z = EE.x, EE.y, EE.z
+
         dhTable = [[self.theta[0], self.l1, 0, math.pi/2],
                    [math.pi/2, 0, 0, 0],
                    [self.theta[1], 0, self.l2, math.pi],
@@ -668,20 +670,19 @@ class FiveDOFRobot:
                    [-math.pi/2, 0, 0, -math.pi/2],
                    [self.theta[4], self.l5, 0, 0]]
 
-        #create our homogeneous tranformation matrix symbolically
         arr = []
         for i in range(len(dhTable)):
             arr.append(ut.dh_to_matrix(dhTable[i]))
         
         H5 = arr[0] * arr[1] * arr[2] * arr[3] * arr[4] * arr[5]
-        R5 = H5[0:3][0:3]
-        z0 = np.array[[0],[0],[1]]
+        R5 = np.array(H5[0:3,0:3])
+        z0 = np.transpose(np.array([[0,0,1]]))
 
-        PWrist = EE - (self.l4+self.l5)*np.matmul(R5,z0)
+        d6 = (self.l4+self.l5)*np.matmul(R5,z0)
 
-        x_wrist = PWrist[0]
-        y_wrist = PWrist[1]
-        z_wrist = PWrist[2]
+        x_wrist = x - d6[0]
+        y_wrist = y - d6[1]
+        z_wrist = z - d6[2]
 
         t_1 = atan2(y_wrist,x_wrist)
 
@@ -689,6 +690,22 @@ class FiveDOFRobot:
         r = sqrt(x_wrist**2 + y_wrist**2)
 
         L = sqrt(s**2 + r**2)
+        alpha = atan2(s,r)
+        beta = acos((self.l2**2 + self.l3**2 - L**2)/(2*self.l2*self.l3))
+
+        if soln == 0:
+            t_1 = atan2(y_wrist,x_wrist)
+            t_3 = math.pi + beta
+            phi = atan2((self.l3*sin(t_3)),(self.l2+(self.l3*cos(t_3))))
+            t_2 = alpha + phi
+        elif soln == 1:
+            t_1 = atan2(y_wrist,x_wrist) + math.pi
+            t_3 = math.pi - beta
+            phi = atan2((self.l3*sin(t_3)),(self.l2+(self.l3*cos(t_3))))
+            t_2 = alpha - phi
+
+        self.calc_robot_points
+
 
 
 
