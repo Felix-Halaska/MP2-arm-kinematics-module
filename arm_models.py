@@ -713,6 +713,7 @@ class FiveDOFRobot:
         x_wrist = p_wrist[0]
         y_wrist = p_wrist[1]
         z_wrist = p_wrist[2]
+        print(p_wrist)
 
         t_1 = atan2(y_wrist,x_wrist)
 
@@ -722,17 +723,18 @@ class FiveDOFRobot:
         L = sqrt(s**2 + r**2)
         alpha = atan2(s,r)
         beta = acos((self.l2**2 + self.l3**2 - L**2)/(2*self.l2*self.l3))
+        phi = asin((self.l3 * sin(np.pi-beta))/L)
 
 
         if soln == 0:
-            t_1 = atan2(y_wrist,x_wrist)
             t_3 = math.pi + beta
-            phi = atan2((self.l3*sin(t_3)),(self.l2+(self.l3*cos(t_3))))
+            #phi = atan2((self.l3*sin(t_3)),(self.l2+(self.l3*cos(t_3))))
+            #print(phi)
             t_2 = alpha + phi
         elif soln == 1:
-            t_1 = atan2(y_wrist,x_wrist) + math.pi
             t_3 = math.pi - beta
-            phi = atan2((self.l3*sin(t_3)),(self.l2+(self.l3*cos(t_3))))
+            #phi = atan2((self.l3*sin(t_3)),(self.l2+(self.l3*cos(t_3))))
+            #print(phi)
             t_2 = alpha - phi
 
 
@@ -740,7 +742,21 @@ class FiveDOFRobot:
         self.theta[1] = t_2
         self.theta[2] = t_3
 
-        self.calc_robot_points
+        self.calc_robot_points()
+
+
+
+        # L = sqrt(x**2 + y**2)
+        # beta = acos((l1**2 + l2**2 - L**2)/(2*l1*l2))
+        # alpha = np.arctan2(y,x)
+        # phi = asin((l2*sin(np.pi-beta))/L)
+        
+        # if soln == 0:
+        #     self.theta[0] = alpha + phi
+        #     self.theta[1] = np.pi + beta
+        # elif soln == 1:
+        #     self.theta[0] = alpha - phi
+        #     self.theta[1] = np.pi - beta
 
 
 
