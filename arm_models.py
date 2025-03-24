@@ -632,7 +632,7 @@ class FiveDOFRobot:
         self.T[2] = arr[3]
         self.T[3] = np.matmul(arr[4], arr[5])
         self.T[4] = arr[6] # m45 is just the rotation so it does not need another link
-        print (self.T)
+        #print (self.T)
 
     def calc_forward_kinematics(self, theta: list, radians=False):
         """
@@ -661,6 +661,7 @@ class FiveDOFRobot:
             soln: Optional parameter for multiple solutions (not implemented).
         """
         x, y, z = EE.x, EE.y, EE.z
+        R_EE = np.array(ut.euler_to_rotm([EE.rotx,EE.roty,EE.rotz]))
 
         # dhTable = [[self.theta[0], self.l1, 0, -math.pi/2],
         #            [self.theta[1]-math.pi/2, 0, self.l2, math.pi],
@@ -677,37 +678,41 @@ class FiveDOFRobot:
         # #H5 = self.T[0] * self.T[1] * self.T[2] * self.T[3] * self.T[4]
         # H5 = arr[0] * arr[1] * arr[2] * arr[3] * arr[4]
         
-        self.theta = [np.deg2rad(angle) for angle in self.theta]
+        # self.theta = [np.deg2rad(angle) for angle in self.theta]
 
-        self.H_01 = ut.dh_to_matrix([self.theta[0], self.l1, 0, -PI / 2])
-        self.H_12 = ut.dh_to_matrix([self.theta[1] - PI / 2, 0, self.l2, PI])
-        self.H_23 = ut.dh_to_matrix([self.theta[2], 0, self.l3, PI])
-        self.H_34 = ut.dh_to_matrix([self.theta[3] + PI / 2, 0, 0, PI / 2])
-        self.H_45 = ut.dh_to_matrix([self.theta[4], self.l4 + self.l5, 0, 0])
-        H5 = self.H_01 @ self.H_12 @ self.H_23 @ self.H_34
-        #self.T = [self.H_01, self.H_12, self.H_23, self.H_34, self.H_45]
-        print(H5)
+        # self.H_01 = ut.dh_to_matrix([self.theta[0], self.l1, 0, -PI / 2])
+        # self.H_12 = ut.dh_to_matrix([self.theta[1] - PI / 2, 0, self.l2, PI])
+        # self.H_23 = ut.dh_to_matrix([self.theta[2], 0, self.l3, PI])
+        # self.H_34 = ut.dh_to_matrix([self.theta[3] + PI / 2, 0, 0, PI / 2])
+        # self.H_45 = ut.dh_to_matrix([self.theta[4], self.l4 + self.l5, 0, 0])
+        # H5 = self.H_01 @ self.H_12 @ self.H_23 @ self.H_34
+        # #self.T = [self.H_01, self.H_12, self.H_23, self.H_34, self.H_45]
+        # print(H5)
 
-        R5 = np.array(H5[0:3,0:3])
-        z0 = np.transpose(np.array([[0,0,1]]))
-        print(R5)
-        #print(z0)
+        # R5 = np.array(H5[0:3,0:3])
+        z_zero = np.transpose(np.array([[0,0,1]]))
+        # print(R5)
+        # #print(z0)
     
-        print(np.linalg.det(R5))
+        # print(np.linalg.det(R5))
 
-        #d = np.matmul(R5,z0)
-        d = R5 * z0
-        print(d)
-        d6 = (self.l4+self.l5)*d
-        print(d6)
+        # #d = np.matmul(R5,z0)
+        # d = R5 * z0
+        # print(d)
+        #d6 = (self.l4+self.l5)*d
+        # print(d6)
 
-        x_wrist = x - d6[0]
-        y_wrist = y - d6[1]
-        z_wrist = z - d6[2]
+        # x_wrist = x - d6[0]
+        # y_wrist = y - d6[1]
+        # z_wrist = z - d6[2]
 
-        print(x_wrist)
-        print(y_wrist)
-        print(z_wrist)
+        # print(x_wrist)
+        # print(y_wrist)
+        # print(z_wrist)
+        p_wrist = np.transpose(np.array([[x,y,z]])) - ((self.l4 + self.l5) * (R_EE @ z_zero))
+        x_wrist = p_wrist[0]
+        y_wrist = p_wrist[1]
+        z_wrist = p_wrist[2]
 
         t_1 = atan2(y_wrist,x_wrist)
 
@@ -729,6 +734,11 @@ class FiveDOFRobot:
             t_3 = math.pi - beta
             phi = atan2((self.l3*sin(t_3)),(self.l2+(self.l3*cos(t_3))))
             t_2 = alpha - phi
+
+
+        self.theta[0] = t_1
+        self.theta[1] = t_2
+        self.theta[2] = t_3
 
         self.calc_robot_points
 
