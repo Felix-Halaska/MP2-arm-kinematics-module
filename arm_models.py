@@ -709,7 +709,7 @@ class FiveDOFRobot:
         # print(x_wrist)
         # print(y_wrist)
         # print(z_wrist)
-        p_wrist = np.transpose(np.array([[x,y,z]])) - ((self.l4 + self.l5) * (R_EE @ z_zero))
+        p_wrist = np.transpose(np.array([[x,y,z]])) - (np.transpose(np.array([[0,0,(self.l4 + self.l5)]])) * (R_EE @ z_zero))
         x_wrist = p_wrist[0]
         y_wrist = p_wrist[1]
         z_wrist = p_wrist[2]
@@ -721,9 +721,9 @@ class FiveDOFRobot:
         r = sqrt(x_wrist**2 + y_wrist**2)
 
         L = sqrt(s**2 + r**2)
-        alpha = atan2(s,r)
-        beta = acos((self.l2**2 + self.l3**2 - L**2)/(2*self.l2*self.l3))
-        phi = asin((self.l3 * sin(np.pi-beta))/L)
+        alpha = atan2(s,r) 
+        beta = np.arccos((self.l2**2 + self.l3**2 - L**2)/(2*self.l2*self.l3))
+        phi = np.arcsin((self.l3 * sin(np.pi-beta))/L)
 
 
         if soln == 0:
