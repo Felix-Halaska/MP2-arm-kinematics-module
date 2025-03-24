@@ -676,8 +676,8 @@ class FiveDOFRobot:
         
         # #H5 = self.T[0] * self.T[1] * self.T[2] * self.T[3] * self.T[4]
         # H5 = arr[0] * arr[1] * arr[2] * arr[3] * arr[4]
-        # if not radians:
-        #     theta = [np.deg2rad(angle) for angle in theta]
+        
+        self.theta = [np.deg2rad(angle) for angle in self.theta]
 
         self.H_01 = ut.dh_to_matrix([self.theta[0], self.l1, 0, -PI / 2])
         self.H_12 = ut.dh_to_matrix([self.theta[1] - PI / 2, 0, self.l2, PI])
