@@ -709,13 +709,13 @@ class FiveDOFRobot:
         # print(x_wrist)
         # print(y_wrist)
         # print(z_wrist)
-        p_wrist = np.transpose(np.array([[x,y,z]])) - (np.transpose(np.array([[0,0,(self.l4 + self.l5)]])) * (R_EE @ z_zero))
+        p_wrist = np.transpose(np.array([[x,y,z]])) - ((self.l4 + self.l5) * (R_EE @ z_zero))
         x_wrist = p_wrist[0]
         y_wrist = p_wrist[1]
         z_wrist = p_wrist[2]
         print(p_wrist)
 
-        t_1 = atan2(y_wrist,x_wrist)
+        t_1 = atan2(y_wrist,x_wrist)+math.pi
 
         s = z_wrist - self.l1
         r = sqrt(x_wrist**2 + y_wrist**2)
@@ -723,17 +723,17 @@ class FiveDOFRobot:
         L = sqrt(s**2 + r**2)
         alpha = atan2(s,r) 
         beta = np.arccos((self.l2**2 + self.l3**2 - L**2)/(2*self.l2*self.l3))
-        phi = np.arcsin((self.l3 * sin(np.pi-beta))/L)
+        #phi = np.arcsin((self.l3 * sin(np.pi-beta))/L)
 
 
         if soln == 0:
-            t_3 = math.pi + beta
-            #phi = atan2((self.l3*sin(t_3)),(self.l2+(self.l3*cos(t_3))))
-            #print(phi)
-            t_2 = alpha + phi
-        elif soln == 1:
             t_3 = math.pi - beta
-            #phi = atan2((self.l3*sin(t_3)),(self.l2+(self.l3*cos(t_3))))
+            phi = atan2((self.l3*sin(-t_3)),(self.l2+(self.l3*cos(-t_3))))
+            #print(phi)
+            t_2 = alpha - phi
+        elif soln == 1:
+            t_3 = -math.pi + beta
+            phi = atan2((self.l3*sin(-t_3)),(self.l2+(self.l3*cos(-t_3))))
             #print(phi)
             t_2 = alpha - phi
 
