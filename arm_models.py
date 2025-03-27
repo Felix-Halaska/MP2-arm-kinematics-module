@@ -694,10 +694,36 @@ class FiveDOFRobot:
             phi = atan2((self.l3*sin(-t_3)),(self.l2+(self.l3*cos(-t_3))))
             t_2 = alpha - phi
 
+        R_1 = np.array([[cos(t_1),0,sin(t_1)],[sin(t_1),0,-cos(t_1)],[0,1,0]])
+        R_1_5 = np.array([[0,-1,0],[1,0,0],[0,0,1]])
+        R_2 = np.array([[cos(t_2),sin(t_2),0],[sin(t_2),-cos(t_2),0],[0,0,-1]])
+        R_3 = np.array([[cos(t_3),sin(t_3),0],[sin(t_3),-cos(t_3),0],[0,0,-1]])
+        R_0_3 = R_1 @ R_1_5 @ R_2 @ R_3
+        print(R_0_3)
+
+        R_3_5 = np.transpose(R_0_3) @ R_EE
+        print(f"{R_3_5=}")
+        print(R_3_5[2,0])
+        print(R_3_5[2,1])
+        print(R_3_5[0,2])
+        print(R_3_5[1,2])
+
+        t_4 = atan2(R_3_5[1,2],R_3_5[0,2])
+        t_5 = atan2(-R_3_5[2,0],-R_3_5[2,1])
+        #print(f"{t_4_test=}")
+        #t_4_test_1 = np.arccos(R_3_5[2,1])
+        #print(f"{t_4_test_1=}")
+        #t_5_test = np.arccos(R_3_5[0,2])
+        #print(f"{t_5_test=}")
+        #t_5_test_1 = np.arcsin(R_3_5[1,2])
+        #print(f"{t_5_test_1=}")
+
         #Assign theta values to theta list
         self.theta[0] = t_1
         self.theta[1] = t_2
         self.theta[2] = t_3
+        self.theta[3] = t_4
+        self.theta[4] = t_5
 
         #Solve for alternative solutions
         t_1_1 = atan2(y_wrist, x_wrist)
@@ -715,15 +741,18 @@ class FiveDOFRobot:
         t_2_3 = alpha_1 - phi_1
 
         #Assign all possible solutions to a list
-        solutions = np.zeros(8,5)
-        solutions[0,0:2] = [t_1_1,t_2,t_3]
-        solutions[1,0] = [t_1_1,t_2_2,t_3]
-        solutions[2,0] = [t_1_1,t_2_1,t_3_1]
-        solutions[3,0] = [t_1_1,t_2_3,t_3_1]
-        solutions[4,0] = [t_1,t_2,t_3]
-        solutions[5,0] = [t_1,t_2_2,t_3]
-        solutions[6,0] = [t_1,t_2_1,t_3_1]
-        solutions[7,0] = [t_1,t_2_3,t_3,1]
+        solutions = np.zeros((8,5))
+        solutions[0,0:3] = [t_1_1,t_2,t_3]
+        solutions[1,0:3] = [t_1_1,t_2_2,t_3]
+        solutions[2,0:3] = [t_1_1,t_2_1,t_3_1]
+        solutions[3,0:3] = [t_1_1,t_2_3,t_3_1]
+        solutions[4,0:3] = [t_1,t_2,t_3]
+        solutions[5,0:3] = [t_1,t_2_2,t_3]
+        solutions[6,0:3] = [t_1,t_2_1,t_3_1]
+        solutions[7,0:3] = [t_1,t_2_3,t_3_1]
+
+        #for i in range(8):
+
 
         self.calc_robot_points()
 
