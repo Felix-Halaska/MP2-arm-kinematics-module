@@ -660,87 +660,70 @@ class FiveDOFRobot:
             EE: EndEffector object containing desired position and orientation.
             soln: Optional parameter for multiple solutions (not implemented).
         """
+        #Redefine EE positions
         x, y, z = EE.x, EE.y, EE.z
-        R_EE = np.array(ut.euler_to_rotm([EE.rotx,EE.roty,EE.rotz]))
 
-        # dhTable = [[self.theta[0], self.l1, 0, -math.pi/2],
-        #            [self.theta[1]-math.pi/2, 0, self.l2, math.pi],
-        #            [self.theta[2], 0, self.l3, math.pi], 
-        #            [self.theta[3] + math.pi/2, 0, 0, math.pi/2],
-        #            [self.theta[4], self.l4 + self.l5, 0, 0]]
-
-        # arr = []
-        # for i in range(len(dhTable)):
-        #     arr.append(ut.dh_to_matrix(dhTable[i]))
-
-        # #self.calc_HTM()
-        
-        # #H5 = self.T[0] * self.T[1] * self.T[2] * self.T[3] * self.T[4]
-        # H5 = arr[0] * arr[1] * arr[2] * arr[3] * arr[4]
-        
-        # self.theta = [np.deg2rad(angle) for angle in self.theta]
-
-        # self.H_01 = ut.dh_to_matrix([self.theta[0], self.l1, 0, -PI / 2])
-        # self.H_12 = ut.dh_to_matrix([self.theta[1] - PI / 2, 0, self.l2, PI])
-        # self.H_23 = ut.dh_to_matrix([self.theta[2], 0, self.l3, PI])
-        # self.H_34 = ut.dh_to_matrix([self.theta[3] + PI / 2, 0, 0, PI / 2])
-        # self.H_45 = ut.dh_to_matrix([self.theta[4], self.l4 + self.l5, 0, 0])
-        # H5 = self.H_01 @ self.H_12 @ self.H_23 @ self.H_34
-        # #self.T = [self.H_01, self.H_12, self.H_23, self.H_34, self.H_45]
-        # print(H5)
-
-        # R5 = np.array(H5[0:3,0:3])
+        #Find wrist position
+        R_EE = np.array(ut.euler_to_rotm((EE.rotx,EE.roty,EE.rotz)),dtype=float)
         z_zero = np.transpose(np.array([[0,0,1]]))
-        # print(R5)
-        # #print(z0)
-    
-        # print(np.linalg.det(R5))
+        p_wrist = np.array([[x],[y],[z]]) - ((self.l4 + self.l5) * (R_EE @ z_zero))
 
-        # #d = np.matmul(R5,z0)
-        # d = R5 * z0
-        # print(d)
-        #d6 = (self.l4+self.l5)*d
-        # print(d6)
-
-        # x_wrist = x - d6[0]
-        # y_wrist = y - d6[1]
-        # z_wrist = z - d6[2]
-
-        # print(x_wrist)
-        # print(y_wrist)
-        # print(z_wrist)
-        p_wrist = np.transpose(np.array([[x,y,z]])) - ((self.l4 + self.l5) * (R_EE @ z_zero))
         x_wrist = p_wrist[0]
         y_wrist = p_wrist[1]
         z_wrist = p_wrist[2]
-        print(p_wrist)
 
+        #Calculate theta 1
         t_1 = atan2(y_wrist,x_wrist)+math.pi
 
+        #Define parallel plane
         s = z_wrist - self.l1
         r = sqrt(x_wrist**2 + y_wrist**2)
 
+        #Find geometric relationships
         L = sqrt(s**2 + r**2)
-        alpha = atan2(s,r) 
-        beta = np.arccos((self.l2**2 + self.l3**2 - L**2)/(2*self.l2*self.l3))
-        #phi = np.arcsin((self.l3 * sin(np.pi-beta))/L)
+        alpha = atan2(r,s) 
+        beta = np.arccos(np.clip((self.l2**2 + self.l3**2 - L**2)/(2*self.l2*self.l3),-1,1))
 
-
+        #Solve for two solutions for theta 2 and theta 3
         if soln == 0:
             t_3 = math.pi - beta
             phi = atan2((self.l3*sin(-t_3)),(self.l2+(self.l3*cos(-t_3))))
-            #print(phi)
             t_2 = alpha - phi
         elif soln == 1:
             t_3 = -math.pi + beta
             phi = atan2((self.l3*sin(-t_3)),(self.l2+(self.l3*cos(-t_3))))
-            #print(phi)
             t_2 = alpha - phi
 
-
+        #Assign theta values to theta list
         self.theta[0] = t_1
         self.theta[1] = t_2
         self.theta[2] = t_3
+
+        #Solve for alternative solutions
+        t_1_1 = atan2(y_wrist, x_wrist)
+        r_1 = -1*sqrt(x_wrist**2 + y_wrist**2)
+        alpha_1 = atan2(r_1, s)
+        t_3 = math.pi-beta
+        t_3_1 = -math.pi + beta
+
+        phi = atan2((self.l3*sin(-t_3)),(self.l2+(self.l3*cos(-t_3))))
+        phi_1 = atan2((self.l3*sin(-t_3_1)),(self.l2+(self.l3*cos(-t_3_1))))
+
+        t_2 = alpha - phi
+        t_2_1 = alpha - phi_1
+        t_2_2 = alpha_1 - phi
+        t_2_3 = alpha_1 - phi_1
+
+        #Assign all possible solutions to a list
+        solutions = np.zeros(8,5)
+        solutions[0,0:2] = [t_1_1,t_2,t_3]
+        solutions[1,0] = [t_1_1,t_2_2,t_3]
+        solutions[2,0] = [t_1_1,t_2_1,t_3_1]
+        solutions[3,0] = [t_1_1,t_2_3,t_3_1]
+        solutions[4,0] = [t_1,t_2,t_3]
+        solutions[5,0] = [t_1,t_2_2,t_3]
+        solutions[6,0] = [t_1,t_2_1,t_3_1]
+        solutions[7,0] = [t_1,t_2_3,t_3,1]
 
         self.calc_robot_points()
 
@@ -852,6 +835,7 @@ class FiveDOFRobot:
         # Calculate the robot points by applying the cumulative transformations
         for i in range(1, 6):
             self.points[i] = T_cumulative[i] @ self.points[0]
+        print(self.points[3])
 
         # Calculate EE position and rotation
         self.EE_axes = T_cumulative[-1] @ np.array([0.075, 0.075, 0.075, 1])  # End-effector axes
@@ -862,7 +846,7 @@ class FiveDOFRobot:
         
         # Extract and assign the RPY (roll, pitch, yaw) from the rotation matrix
         rpy = rotm_to_euler(self.T_ee[:3, :3])
-        self.ee.rotx, self.ee.roty, self.ee.rotz = rpy[2], rpy[1], rpy[0]
+        self.ee.rotx, self.ee.roty, self.ee.rotz = rpy[0], rpy[1], rpy[2]
 
         # Calculate the EE axes in space (in the base frame)
         self.EE = [self.ee.x, self.ee.y, self.ee.z]
