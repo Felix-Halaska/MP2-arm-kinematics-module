@@ -767,6 +767,8 @@ class FiveDOFRobot:
         self.theta[0] = t_1
         self.theta[1] = t_2
         self.theta[2] = t_3
+        self.theta[3] = t_4
+        self.theta[4] = t_5
 
         # Solve for alternative solutions
         t_1_1 = atan2(y_wrist, x_wrist)
