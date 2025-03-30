@@ -699,24 +699,11 @@ class FiveDOFRobot:
         R_2 = np.array([[cos(t_2),sin(t_2),0],[sin(t_2),-cos(t_2),0],[0,0,-1]])
         R_3 = np.array([[cos(t_3),sin(t_3),0],[sin(t_3),-cos(t_3),0],[0,0,-1]])
         R_0_3 = R_1 @ R_1_5 @ R_2 @ R_3
-        print(R_0_3)
 
         R_3_5 = np.transpose(R_0_3) @ R_EE
-        print(f"{R_3_5=}")
-        print(R_3_5[2,0])
-        print(R_3_5[2,1])
-        print(R_3_5[0,2])
-        print(R_3_5[1,2])
 
         t_4 = atan2(R_3_5[1,2],R_3_5[0,2])
         t_5 = atan2(-R_3_5[2,0],-R_3_5[2,1])
-        #print(f"{t_4_test=}")
-        #t_4_test_1 = np.arccos(R_3_5[2,1])
-        #print(f"{t_4_test_1=}")
-        #t_5_test = np.arccos(R_3_5[0,2])
-        #print(f"{t_5_test=}")
-        #t_5_test_1 = np.arcsin(R_3_5[1,2])
-        #print(f"{t_5_test_1=}")
 
         #Assign theta values to theta list
         self.theta[0] = t_1
@@ -725,33 +712,59 @@ class FiveDOFRobot:
         self.theta[3] = t_4
         self.theta[4] = t_5
 
-        #Solve for alternative solutions
-        t_1_1 = atan2(y_wrist, x_wrist)
-        r_1 = -1*sqrt(x_wrist**2 + y_wrist**2)
-        alpha_1 = atan2(r_1, s)
-        t_3 = math.pi-beta
-        t_3_1 = -math.pi + beta
 
-        phi = atan2((self.l3*sin(-t_3)),(self.l2+(self.l3*cos(-t_3))))
-        phi_1 = atan2((self.l3*sin(-t_3_1)),(self.l2+(self.l3*cos(-t_3_1))))
 
-        t_2 = alpha - phi
-        t_2_1 = alpha - phi_1
-        t_2_2 = alpha_1 - phi
-        t_2_3 = alpha_1 - phi_1
+        #OK SOLUTIONS HERE WE GO
 
-        #Assign all possible solutions to a list
-        solutions = np.zeros((8,5))
-        solutions[0,0:3] = [t_1_1,t_2,t_3]
-        solutions[1,0:3] = [t_1_1,t_2_2,t_3]
-        solutions[2,0:3] = [t_1_1,t_2_1,t_3_1]
-        solutions[3,0:3] = [t_1_1,t_2_3,t_3_1]
-        solutions[4,0:3] = [t_1,t_2,t_3]
-        solutions[5,0:3] = [t_1,t_2_2,t_3]
-        solutions[6,0:3] = [t_1,t_2_1,t_3_1]
-        solutions[7,0:3] = [t_1,t_2_3,t_3_1]
+        # s = z_wrist - self.l1
+        # i = 0
 
-        #for i in range(8):
+        # theta_1_list = [0, math.pi]
+        # r_list = [1, -1]
+        # theta_3_list = [1, -1]
+
+        # solutions = np.zeros((8,6))
+
+        # for theta_1_option in theta_1_list:
+        #     theta_1 = atan2(y_wrist, x_wrist) + theta_1_option
+
+        #     for r_option in r_list:
+        #         r = r_option * sqrt(x_wrist**2 + y_wrist**2)
+        #         L = sqrt(s**2 + r**2)
+        #         alpha = atan2(r,s) 
+        #         beta = np.arccos(np.clip((self.l2**2 + self.l3**2 - L**2)/(2*self.l2*self.l3),-1,1))
+
+        #         for theta_3_option in theta_3_list:
+        #             theta_3 = theta_3_option * (math.pi - beta)
+        #             phi = atan2((self.l3*sin(-theta_3)),(self.l2+(self.l3*cos(-theta_3))))
+        #             theta_2 = alpha - phi
+
+        #             R_0_1 = np.array([[cos(theta_1),0,sin(theta_1)],[sin(theta_1),0,-cos(theta_1)],[0,1,0]])
+        #             R_1_15 = np.array([[0,-1,0],[1,0,0],[0,0,1]])
+        #             R_15_2 = np.array([[cos(theta_2),sin(theta_2),0],[sin(theta_2),-cos(theta_2),0],[0,0,-1]])
+        #             R_2_3 = np.array([[cos(theta_3),sin(theta_3),0],[sin(theta_3),-cos(theta_3),0],[0,0,-1]])
+        #             R_03 = R_0_1 @ R_1_15 @ R_15_2 @ R_2_3
+
+        #             R_35 = np.transpose(R_03) @ R_EE
+
+        #             theta_4 = atan2(R_35[1,2],R_35[0,2])
+        #             theta_5 = atan2(-R_35[2,0],-R_35[2,1])
+
+        #             solutions[i,0:6] = [theta_1, theta_2, theta_3, theta_4, theta_5]
+
+        #             self.calc_HTM()
+        #             EE_orientation = ut.rotm_to_euler(self.T[0:4,0:4])
+                        ####HOW TO CALCULATE TARGET AND THEORETICAL EE POS AND ORIENTATION
+                    
+        #             if solutions[i,0] >= self.theta_limits[0,0] and solutions[i,0] <= self.theta_limits[0,1] and 
+        #                 solutions[i,1] >= self.theta_limits[1,0] and solutions[i,1] <= self.theta_limits[1,1] and
+        #                 solutions[i,2] >= self.theta_limits[2,0] and solutions[i,2] <= self.theta_limits[2,1] and
+        #                 solutions[i,3] >= self.theta_limits[3,0] and solutions[i,3] <= self.theta_limits[3,1] and
+        #                 solutions[i,4] >= self.theta_limits[4,0] and solutions[i,4] <= self.theta_limits[4,1] and
+
+
+        #             i = i+1
+
 
 
         self.calc_robot_points()
